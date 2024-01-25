@@ -1,0 +1,110 @@
+function replace_email($str)
+{
+    return pcre_replace(''([^\s<]+)@([a-zA-Z0-9-.]{3,})'', "...@...",  $str);
+}
+
+function replace_localpart($str)
+{
+    return pcre_replace(''([^\s<]+)@([a-zA-Z0-9-.]{3,})'', "...@$2",  $str);
+}
+
+/*
+  arguments,
+  message,
+  class = none,
+  redact = false,
+  custom = []
+*/
+function log_delivery_attempt($args, $opts = [])
+{
+    $time = time();
+    $doc = [];
+    $doc["hostname"] = gethostname();
+    $doc["transactionid"] = $args["message"]["id"]["transaction"];
+    $doc["queueid"] = $args["message"]["id"]["queue"];
+    if (!$args["redact"])
+    {
+        $doc["senderlocalpart"] = $args["message"]["senderaddress"]["localpart"];
+    }
+    $doc["senderdomain"] = $args["message"]["senderaddress"]["domain"];
+    if (!$args["redact"])
+    {
+        $doc["recipientlocalpart"] = $args["message"]["recipientaddress"]["localpart"];
+    }
+    $doc["recipientdomain"] = $args["message"]["recipientaddress"]["domain"];
+    $doc["size"] = $args["message"]["size"];
+    $doc["received"] = $args["message"]["ts"] * 1000;
+    $doc["@timestamp"] = round($time * 1000);
+    $doc["action"] = (!$args["arguments"]["attempt"]["result"] and !$args["arguments"]["attempt"]["error"]) ? "removed" : ($args["arguments"]["action"] === "DELETE" or $args["arguments"]["action"] === "BOUNCE") ? "bounced" : $args["arguments"]["action"] === "QUEUE" ? "deferred" : "delivered";
+    $doc["transportid"] = $args["message"]["transportid"];
+    $doc["grouping"] = $args["arguments"]["grouping"];
+    if ($args["message"]["jobid"])
+    {
+        $doc["jobid"] = $args["message"]["jobid"];
+    }
+    if ($args["arguments"]["attempt"]["duration"])
+    {
+        $doc["duration"] = $args["arguments"]["attempt"]["duration"];
+    }
+    if ($doc["action"] !== "deferred")
+    {
+        $doc["totalduration"] = ($doc["@timestamp"] - $doc["received"]) / 1000;
+    }
+    if ($args["arguments"]["attempt"]["connection"])
+    {
+        $doc["localip"] = $args["arguments"]["attempt"]["connection"]["localip"];
+        $doc["remoteip"] = $args["arguments"]["attempt"]["connection"]["remoteip"];
+        $doc["remotemx"] = $args["arguments"]["attempt"]["connection"]["remotemx"];
+    }
+    if ($args["arguments"]["attempt"]["result"])
+    {
+        $doc["smtpcode"] = $args["arguments"]["attempt"]["result"]["code"];
+        $doc["smtpenhanced"] = array_join($args["arguments"]["attempt"]["result"]["enhanced"], ".");
+        $doc["smtpstate"] = $args["arguments"]["attempt"]["result"]["state"];
+    }
+
+    if ($args["arguments"]["dsn"]["diagnosticcode"])
+    {
+        $doc["smtpreason"] = $args["arguments"]["dsn"]["diagnosticcode"];
+        if ($args["redact"])
+        {
+            $doc["smtpreason"] = replace_localpart($doc["smtpreason"]);
+        }
+        $doc["smtpreasonnormalized"] = replace_email($args["arguments"]["dsn"]["diagnosticcode"]);
+    }
+
+    if ($args["class"])
+    {
+        $doc["class"] = $args["class"];
+    }
+    if (is_array($args["custom"]))
+    {
+        $doc += $args["custom"];
+    }
+
+    $indexname = "halon-delivery-attempts";
+    if ($opts["indexname"])
+    {
+        $indexname = $opts["indexname"];
+    }
+    $httpbulkid = "elastic";
+    if ($opts["id"])
+    {
+        $httpbulkid = $opts["id"];
+    }
+
+    $payload = json_encode($doc);
+    if ($payload === none)
+        return false;
+
+    $index = [
+        "create" => [
+            "_index" => $indexname
+        ]
+    ];
+
+    if (!http_bulk($httpbulkid, json_encode($index)."\n".$payload))
+        return false;
+
+    return true;
+}

@@ -1,0 +1,319 @@
+/*
+  action: string,
+  reason: string,
+  metadata: array,
+  arguments, array,
+  connection: array,
+  transaction: array,
+  custom: array
+*/
+function log_rcptto($args, $opts = [])
+{
+    $time = time();
+    $logdata = [
+        "action" => $args["action"],
+        "reason" => $args["reason"],
+        "hostname" => gethostname(),
+        "transactionid" => $args["transaction"]["id"],
+        "remoteip" => $args["connection"]["remoteip"],
+        "remoteport" => $args["connection"]["remoteport"],
+        "remoteptr" => $args["connection"]["remoteptr"],
+        "localip" => $args["connection"]["localip"],
+        "localport" => $args["connection"]["localport"],
+        "serverid" => $args["connection"]["serverid"],
+        "tlsstarted" => isset($args["connection"]["tls"]),
+        "senderhelo" => $args["connection"]["helo"]["host"],
+        "authenticated" => isset($args["connection"]["auth"]),
+        "sender" => $args["transaction"]["sender"],
+        "senderlocalpart" => $args["transaction"]["senderaddress"]["localpart"],
+        "senderdomain" => $args["transaction"]["senderaddress"]["domain"],
+        "senderparams" => $args["transaction"]["senderparams"],
+        "recipient" => $args["arguments"]["recipient"],
+        "recipientlocalpart" => $args["arguments"]["address"]["localpart"],
+        "recipientdomain" => $args["arguments"]["address"]["domain"],
+        "recipientparams" => $args["arguments"]["params"],
+        "transportid" => $args["arguments"]["transportid"],
+        "receivedtime" => round($time * 1000)
+    ];
+
+    if (isset($args["connection"]["auth"]))
+    {
+        $logdata += [
+            "authusername" => $args["connection"]["auth"]["username"] ?? "",
+        ];
+    }
+
+    if (isset($args["connection"]["tls"]))
+    {
+        $logdata += [
+            "tlsprotocol" => $args["connection"]["tls"]["protocol"],
+            "tlscipher" => $args["connection"]["tls"]["cipher"]
+        ];
+    }
+
+    if (is_array($args["custom"]))
+    {
+        $logdata += $args["custom"];
+    }
+
+    $indexname = "halon-transactions";
+    if ($opts["indexname"])
+    {
+        $indexname = $opts["indexname"];
+    }
+    $httpbulkid = "elastic";
+    if ($opts["id"])
+    {
+        $httpbulkid = $opts["id"];
+    }
+    $indexrotate = "%Y-%m-%d";
+    if ($opts["indexrotate"])
+    {
+        $indexrotate = $opts["indexrotate"];
+    }
+
+    $payload = json_encode($logdata);
+    if ($payload === none)
+        return false;
+
+    $index = [
+        "index" => [
+            "_index" => $indexname."-".strftime($indexrotate, $time)
+        ]
+    ];
+
+    if (!http_bulk($httpbulkid, json_encode($index)."\n".$payload))
+        return false;
+
+    return true;
+}
+
+/*
+  action: string,
+  reason: string,
+  recipient: array,
+  queueid: number,
+  metadata: array,
+  arguments, array,
+  connection: array,
+  transaction: array,
+  custom: array
+*/
+function log_eod($args, $opts = [])
+{
+    $logdata = [
+        "action" => $args["action"],
+        "reason" => $args["reason"],
+        "hostname" => gethostname(),
+        "transactionid" => $args["transaction"]["id"],
+        "remoteip" => $args["connection"]["remoteip"],
+        "remoteport" => $args["connection"]["remoteport"],
+        "remoteptr" => $args["connection"]["remoteptr"],
+        "localip" => $args["connection"]["localip"],
+        "localport" => $args["connection"]["localport"],
+        "serverid" => $args["connection"]["serverid"],
+        "senderhelo" => $args["connection"]["helo"]["host"] ?? "",
+        "tlsstarted" => isset($args["connection"]["tls"]),
+        "authenticated" => isset($args["connection"]["auth"]),
+        "sender" => $args["transaction"]["sender"],
+        "senderlocalpart" => $args["transaction"]["senderaddress"]["localpart"],
+        "senderdomain" => $args["transaction"]["senderaddress"]["domain"],
+        "senderparams" => $args["transaction"]["senderparams"],
+        "recipient" => $args["recipient"]["recipient"],
+        "recipientlocalpart" => $args["recipient"]["address"]["localpart"],
+        "recipientdomain" => $args["recipient"]["address"]["domain"],
+        "transportid" => $args["recipient"]["transportid"],
+        "subject" => $args["arguments"]["mail"]->getHeader("subject"),
+        "size" => $args["arguments"]["mail"]->getSize(),
+        "receivedtime" => round($args["transaction"]["ts"] * 1000),
+        "metadata" => $args["metadata"]
+    ];
+
+    if (isset($args["connection"]["auth"]))
+    {
+        $logdata += [
+            "authusername" => $args["connection"]["auth"]["username"] ?? "",
+        ];
+    }
+
+    if (isset($args["connection"]["tls"]))
+    {
+        $logdata += [
+            "tlsprotocol" => $args["connection"]["tls"]["protocol"],
+            "tlscipher" => $args["connection"]["tls"]["cipher"]
+        ];
+    }
+    if ($args["queueid"])
+    {
+        $logdata["queueid"] = $args["queueid"];
+    }
+
+    if (is_array($args["custom"]))
+    {
+        $logdata += $args["custom"];
+    }
+
+    $indexname = "halon-transactions";
+    if ($opts["indexname"])
+    {
+        $indexname = $opts["indexname"];
+    }
+    $httpbulkid = "elastic";
+    if ($opts["id"])
+    {
+        $httpbulkid = $opts["id"];
+    }
+    $indexrotate = "%Y-%m-%d";
+    if ($opts["indexrotate"])
+    {
+        $indexrotate = $opts["indexrotate"];
+    }
+
+    $payload = json_encode($logdata);
+    if ($payload === none)
+        return false;
+
+    $index = [
+        "index" => [
+            "_index" => $indexname."-".strftime($indexrotate, $args["transaction"]["ts"])
+        ]
+    ];
+    if ($args["queueid"])
+    {
+        $index["index"]["_id"] = $args["transaction"]["id"].":".$args["queueid"];
+    }
+    
+    if (!http_bulk($httpbulkid, json_encode($index)."\n".$payload))
+        return false;
+
+    return true;
+}
+
+/*
+    message: array
+    custom: array
+*/
+function log_predelivery($args, $opts = [])
+{
+    if (!$args["custom"])
+        return false;
+    $time = time();
+
+    $logdata["doc"] = $args["custom"];
+
+    $indexname = "halon-transactions";
+    if ($opts["indexname"])
+    {
+        $indexname = $opts["indexname"];
+    }
+    $httpbulkid = "elastic";
+    if ($opts["id"])
+    {
+        $httpbulkid = $opts["id"];
+    }
+    $indexrotate = "%Y-%m-%d";
+    if ($opts["indexrotate"])
+    {
+        $indexrotate = $opts["indexrotate"];
+    }
+
+    $payload = json_encode($logdata);
+    if ($payload === none)
+        return false;
+
+    $index = [
+        "update" => [
+            "_id" => $args["message"]["id"]["transaction"].":".$args["message"]["id"]["queue"],
+            "_index" => $indexname."-".strftime($indexrotate, $args["message"]["ts"])
+        ]
+    ];
+
+    if (!http_bulk($httpbulkid, json_encode($index)."\n".$payload))
+        return false;
+
+    return true;
+}
+
+/*
+  message: array,
+  arguments: array,
+  custom: array
+*/
+function log_postdelivery($args, $opts = [])
+{
+    $time = time();
+    $logdata["doc"] = [
+        "action" => $args["arguments"]["action"] ?? "DELIVER",
+        "reason" => $args["arguments"]["attempt"]["result"]["reason"][0] ?? $args["arguments"]["attempt"]["error"]["message"] ?? "",
+        "queue" => [
+            "retry" => $args["arguments"]["retry"],
+            "errorcode" => $args["arguments"]["attempt"]["result"]["code"]
+        ],
+        "sender" => $args["message"]["sender"],
+        "senderdomain" => $args["message"]["senderaddress"]["domain"],
+        "recipient" => $args["message"]["recipient"],
+        "recipientdomain" => $args["message"]["recipientaddress"]["domain"],
+        "transportid" => $args["message"]["transportid"],
+        "finishedtime" => round($time * 1000)
+    ];
+
+    if ($logdata["doc"]["action"] !== "QUEUE")
+    {
+        $logdata["doc"]["queue"]["totalduration"] = $time - $args["message"]["ts"];
+    }
+    if ($args["arguments"]["attempt"]["duration"])
+    {
+        $logdata["doc"]["queue"]["duration"] = $args["arguments"]["attempt"]["duration"];
+    }
+    if ($args["arguments"]["attempt"]["connection"])
+    {
+        $logdata["doc"]["queue"]["localip"] = $args["arguments"]["attempt"]["connection"]["localip"];
+        $logdata["doc"]["queue"]["remoteip"] = $args["arguments"]["attempt"]["connection"]["remoteip"];
+        $logdata["doc"]["queue"]["remotemx"] = $args["arguments"]["attempt"]["connection"]["remotemx"];
+    }
+    if ($args["arguments"]["attempt"]["result"])
+    {
+        $logdata["doc"]["queue"]["smtpcode"] = $args["arguments"]["attempt"]["result"]["code"];
+        $logdata["doc"]["queue"]["smtpenhanced"] = array_join($args["arguments"]["attempt"]["result"]["enhanced"], ".");
+        $logdata["doc"]["queue"]["smtpreason"] = array_join($args["arguments"]["attempt"]["result"]["reason"], "\n");
+        $logdata["doc"]["queue"]["smtpreasonnormalized"] = array_join($args["arguments"]["attempt"]["result"]["reason"], "\n");
+        $logdata["doc"]["queue"]["smtpstate"] = $args["arguments"]["attempt"]["result"]["state"];
+    }
+
+    if (is_array($args["custom"]))
+    {
+        $logdata["doc"] += $args["custom"];
+    }
+
+    $indexname = "halon-transactions";
+    if ($opts["indexname"])
+    {
+        $indexname = $opts["indexname"]."-";
+    }
+    $httpbulkid = "elastic";
+    if ($opts["id"])
+    {
+        $httpbulkid = $opts["id"];
+    }
+    $indexrotate = "%Y-%m-%d";
+    if ($opts["indexrotate"])
+    {
+        $indexrotate = $opts["indexrotate"];
+    }
+
+    $payload = json_encode($logdata);
+    if ($payload === none)
+        return false;
+
+    $index = [
+        "update" => [
+            "_id" => $args["message"]["id"]["transaction"].":".$args["message"]["id"]["queue"],
+            "_index" => $indexname."-".strftime($indexrotate, $args["message"]["ts"])
+        ]
+    ];
+
+    if (!http_bulk($httpbulkid, json_encode($index)."\n".$payload))
+        return false;
+
+    return true;
+}
