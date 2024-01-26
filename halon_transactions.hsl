@@ -280,6 +280,11 @@ function log_postdelivery($args, $opts = [])
         $logdata["doc"]["queue"]["smtpstate"] = $args["arguments"]["attempt"]["result"]["state"];
     }
 
+    if ($args["message"]["jobid"])
+    {
+         $logdata["doc"]["jobid"] = $args["message"]["jobid"];
+    }
+
     if (is_array($args["custom"]))
     {
         $logdata["doc"] += $args["custom"];
