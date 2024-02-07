@@ -1,11 +1,11 @@
 function replace_email($str)
 {
-    return pcre_replace(''([^\s<]+)@([a-zA-Z0-9-.]{3,})'', "...@...",  $str);
+    return pcre_replace(#/([^\s<]+)@([a-zA-Z0-9-.]{3,})/, "...@...",  $str);
 }
 
 function replace_localpart($str)
 {
-    return pcre_replace(''([^\s<]+)@([a-zA-Z0-9-.]{3,})'', "...@$2",  $str);
+    return pcre_replace(#/([^\s<]+)@([a-zA-Z0-9-.]{3,})/, "...@$2",  $str);
 }
 
 /*
