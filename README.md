@@ -122,6 +122,7 @@ The following options are available in the **args** array.
 - reason `string` - The reason for the specific action
 - recipient `array` -  The recipient (https://docs.halon.io/hsl/eod.html#recipient)
 - queueid `number` - Queue ID
+- metadata `array` - Metadata
 - custom `array` - Used for additional logging
 - arguments `array` - Use the predefined context variable $arguments
 - connection `array` - Use the predefined context variable $connection
