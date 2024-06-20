@@ -293,7 +293,7 @@ function log_postdelivery($args, $opts = [])
     $indexname = "halon-transactions";
     if ($opts["indexname"])
     {
-        $indexname = $opts["indexname"]."-";
+        $indexname = $opts["indexname"];
     }
     $httpbulkid = "elastic";
     if ($opts["id"])
