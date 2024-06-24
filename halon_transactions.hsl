@@ -282,7 +282,11 @@ function log_postdelivery($args, $opts = [])
     $logdata["doc"]["grouping"] = $args["arguments"]["grouping"];
     if ($args["message"]["jobid"])
     {
-         $logdata["doc"]["jobid"] = $args["message"]["jobid"];
+        $logdata["doc"]["jobid"] = $args["message"]["jobid"];
+    }
+    if ($args["message"]["tenantid"])
+    {
+        $logdata["doc"]["tenantid"] = $args["message"]["tenantid"];
     }
 
     if (is_array($args["custom"]))

@@ -42,6 +42,10 @@ function log_delivery_attempt($args, $opts = [])
     {
         $doc["jobid"] = $args["message"]["jobid"];
     }
+    if ($args["message"]["tenantid"])
+    {
+        $doc["tenantid"] = $args["message"]["tenantid"];
+    }
     if ($args["arguments"]["attempt"]["duration"])
     {
         $doc["duration"] = $args["arguments"]["attempt"]["duration"];
