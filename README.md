@@ -49,6 +49,10 @@ The following options are available in the optional **opts** array.
 
 - indexname `string` - Elasticsearch index pattern
 - id `string` - The http-bulk ID
+- normalization `array` - Normalization settings for the `smtpreasonnormalized` property
+    - email `boolean` - Normalize email addresses (Default is `true`)
+    - url `boolean` - Normalize URL:s (Default is `false`)
+    - ip `boolean` - Normalize IP addresses (Default is `false`)
 
 ```
 import { log_delivery_attempt } from "extras://history-elastic";
