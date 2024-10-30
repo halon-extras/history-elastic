@@ -42,13 +42,13 @@ The following options are available in the **args** array.
 - arguments `array` - Use the predefined context variable $arguments
 - message `array` - Use the predefined context variable $message
 - class `string` - Bounce category (optional)
-- redact `boolean` - Redacts the local-part of the email address for both sender and recipient (optional)
 - custom `array` - Used for additional logging (optional)
 
 The following options are available in the optional **opts** array.
 
 - indexname `string` - Elasticsearch index pattern
 - id `string` - The http-bulk ID
+- redact `boolean` - Redacts the local-part of the email address for both sender and recipient (Default is `false`)
 - normalization `array` - Normalization settings for the `smtpreasonnormalized` property
     - email `boolean` - Normalize email addresses (Default is `true`)
     - url `boolean` - Normalize URL:s (Default is `false`)

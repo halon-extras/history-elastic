@@ -20,17 +20,18 @@ function replace_ips($str)
 
 function generate_delivery_attempt($args, $opts = [])
 {
+    $redact = $opts["redact"] ?? $args["redact"]; // Check $args["redact"] for backwards-compatibility
     $time = time();
     $doc = [];
     $doc["hostname"] = gethostname();
     $doc["transactionid"] = $args["message"]["id"]["transaction"];
     $doc["queueid"] = $args["message"]["id"]["queue"];
-    if (!$args["redact"])
+    if (!$redact)
     {
         $doc["senderlocalpart"] = $args["message"]["senderaddress"]["localpart"];
     }
     $doc["senderdomain"] = $args["message"]["senderaddress"]["domain"];
-    if (!$args["redact"])
+    if (!$redact)
     {
         $doc["recipientlocalpart"] = $args["message"]["recipientaddress"]["localpart"];
     }
@@ -73,7 +74,7 @@ function generate_delivery_attempt($args, $opts = [])
     if ($args["arguments"]["dsn"]["diagnosticcode"])
     {
         $doc["smtpreason"] = $args["arguments"]["dsn"]["diagnosticcode"];
-        if ($args["redact"])
+        if ($redact)
         {
             $doc["smtpreason"] = replace_localpart($doc["smtpreason"]);
         }
