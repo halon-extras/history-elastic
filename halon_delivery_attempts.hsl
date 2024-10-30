@@ -8,6 +8,16 @@ function replace_localpart($str)
     return pcre_replace(#/([^\s<]+)@([a-zA-Z0-9-.]{3,})/, "...@$2",  $str);
 }
 
+function replace_urls($str)
+{
+    return pcre_replace(#/(https?:\/\/[^\s\/$.?#].[^\s]*)/, "...",  $str);
+}
+
+function replace_ips($str)
+{
+    return pcre_replace(#/(\b(?:(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\b)/, "x.x.x.x",  $str);
+}
+
 /*
   arguments,
   message,
@@ -75,6 +85,8 @@ function log_delivery_attempt($args, $opts = [])
             $doc["smtpreason"] = replace_localpart($doc["smtpreason"]);
         }
         $doc["smtpreasonnormalized"] = replace_email($args["arguments"]["dsn"]["diagnosticcode"]);
+        $doc["smtpreasonnormalized"] = replace_urls($doc["smtpreasonnormalized"]);
+        $doc["smtpreasonnormalized"] = replace_ips($doc["smtpreasonnormalized"]);
     }
 
     if ($args["class"])
