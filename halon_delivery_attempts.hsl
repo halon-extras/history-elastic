@@ -1,3 +1,5 @@
+import { bounce_normalizer } from "extras://bounce-normalizer";
+
 function replace_email($str)
 {
     return pcre_replace(#/([^\s<]+)@([a-zA-Z0-9-.]{3,})/, "...@...",  $str);
@@ -78,19 +80,7 @@ function generate_delivery_attempt($args, $opts = [])
         {
             $doc["smtpreason"] = replace_localpart($doc["smtpreason"]);
         }
-        $doc["smtpreasonnormalized"] = $doc["smtpreason"];
-        if (!isset($opts["normalization"]["email"]) or $opts["normalization"]["email"])
-        {
-            $doc["smtpreasonnormalized"] = replace_email($doc["smtpreasonnormalized"]);
-        }
-        if ($opts["normalization"]["url"])
-        {
-            $doc["smtpreasonnormalized"] = replace_urls($doc["smtpreasonnormalized"]);
-        }
-        if ($opts["normalization"]["ip"])
-        {
-            $doc["smtpreasonnormalized"] = replace_ips($doc["smtpreasonnormalized"]);
-        }
+        $doc["smtpreasonnormalized"] = bounce_normalizer($doc["smtpreason"]);
     }
 
     if ($args["class"])

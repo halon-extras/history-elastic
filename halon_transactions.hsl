@@ -1,3 +1,5 @@
+import { bounce_normalizer } from "extras://bounce-normalizer";
+
 /*
   action: string,
   reason: string,
@@ -275,8 +277,8 @@ function log_postdelivery($args, $opts = [])
     {
         $logdata["doc"]["queue"]["smtpcode"] = $args["arguments"]["attempt"]["result"]["code"];
         $logdata["doc"]["queue"]["smtpenhanced"] = array_join($args["arguments"]["attempt"]["result"]["enhanced"], ".");
-        $logdata["doc"]["queue"]["smtpreason"] = array_join($args["arguments"]["attempt"]["result"]["reason"], "\n");
-        $logdata["doc"]["queue"]["smtpreasonnormalized"] = array_join($args["arguments"]["attempt"]["result"]["reason"], "\n");
+        $logdata["doc"]["queue"]["smtpreason"] = $args["arguments"]["dsn"]["diagnosticcode"];
+        $logdata["doc"]["queue"]["smtpreasonnormalized"] = bounce_normalizer($logdata["doc"]["queue"]["smtpreason"]);
         $logdata["doc"]["queue"]["smtpstate"] = $args["arguments"]["attempt"]["result"]["state"];
     }
     $logdata["doc"]["grouping"] = $args["arguments"]["grouping"];

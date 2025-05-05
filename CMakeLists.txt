@@ -1,6 +1,6 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.0)
 
-PROJECT("history-elastic" VERSION 1.2.0)
+PROJECT("history-elastic" VERSION 2.0.0)
 
 IF (EXISTS "${CMAKE_CURRENT_BINARY_DIR}/CPACK_GENERATOR.txt")
 	FILE(STRINGS ${CMAKE_CURRENT_BINARY_DIR}/CPACK_GENERATOR.txt CPACK_GENERATOR)
@@ -17,10 +17,10 @@ INSTALL(FILES "halon_delivery_attempts.hsl" DESTINATION "plugins/hsl/${PROJECT_N
 INSTALL(FILES "main.hsl" DESTINATION "plugins/hsl/${PROJECT_NAME}")
 
 IF (CPACK_GENERATOR MATCHES "DEB")
-	SET(CPACK_DEBIAN_PACKAGE_DEPENDS "halon (>= 5.10), halon-extras-http-bulk")
+	SET(CPACK_DEBIAN_PACKAGE_DEPENDS "halon (>= 5.10), halon-extras-http-bulk, halon-extras-bounce-normalizer")
 ENDIF()
 IF (CPACK_GENERATOR MATCHES "RPM")
-	SET(CPACK_RPM_PACKAGE_REQUIRES "halon >= 5.10, halon-extras-http-bulk")
+	SET(CPACK_RPM_PACKAGE_REQUIRES "halon >= 5.10, halon-extras-http-bulk, halon-extras-bounce-normalizer")
 ENDIF()
 
 SET(CPACK_PACKAGE_NAME "halon-extras-${PROJECT_NAME}")
