@@ -249,6 +249,7 @@ function log_postdelivery($args, $opts = [])
     $logdata["doc"] = [
         "action" => $args["arguments"]["action"] ?? "DELIVER",
         "reason" => $args["arguments"]["attempt"]["result"]["reason"][0] ?? $args["arguments"]["attempt"]["error"]["message"] ?? "",
+        "reasonnormalized" => bounce_normalizer($args["arguments"]["attempt"]["result"]["reason"][0] ?? $args["arguments"]["attempt"]["error"]["message"] ?? ""),
         "queue" => [
             "retry" => $args["arguments"]["retry"],
             "errorcode" => $args["arguments"]["attempt"]["result"]["code"]
@@ -258,7 +259,6 @@ function log_postdelivery($args, $opts = [])
         "recipient" => $args["message"]["recipient"],
         "recipientdomain" => $args["message"]["recipientaddress"]["domain"],
         "transportid" => $args["message"]["transportid"],
-        "reasonnormalized" => bounce_normalizer($args["arguments"]["attempt"]["result"]["reason"][0] ?? $args["arguments"]["attempt"]["error"]["message"] ?? ""),
         "finishedtime" => round($time * 1000)
     ];
 
