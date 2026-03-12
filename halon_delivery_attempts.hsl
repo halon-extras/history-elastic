@@ -1,4 +1,5 @@
 import { bounce_normalizer } from "extras://bounce-normalizer";
+import { telemetry_feed } from "extras://telemetry";
 
 function replace_email($str)
 {
@@ -94,6 +95,31 @@ function generate_delivery_attempt($args, $opts = [])
     return $doc;
 }
 
+function log_telemetry($doc, $args)
+{
+    $telemetry = [
+        "version" => 1,
+        "localip" => $doc["localip"],
+        "remoteip" => $doc["remoteip"],
+        "remotegreet" => $args["arguments"]["attempt"]["connection"]["remotegreet"],
+        "grouping" => $doc["grouping"],
+        "retry" => $args["arguments"]["retry"],
+        "backoff" => isset($args["arguments"]["policy"]["tags"]) and array_includes(function ($tag) {
+            return $tag === "backoff" or $tag =~ #/^backoff-.+$/;
+        }, $args["arguments"]["policy"]["tags"]),
+        "senderdomain" => $doc["senderdomain"],
+        "recipientdomain" => $doc["recipientdomain"],
+        "smtpstate" => $args["arguments"]["attempt"]["result"]["state"],
+        "action" => $doc["action"],
+        "smtpresponse" => $doc["smtpreasonnormalized"],
+        "duration" => $doc["duration"],
+        "size" => $doc["size"],
+        "timestamp" => floor($doc["@timestamp"] / 1000)
+    ];
+
+    telemetry_feed($telemetry);
+}
+
 function log_delivery_attempt($args, $opts = [])
 {
     $doc = generate_delivery_attempt($args, $opts);
@@ -117,6 +143,8 @@ function log_delivery_attempt($args, $opts = [])
             "_index" => $indexname
         ]
     ];
+
+    log_telemetry($doc, $args);
 
     if (!http_bulk($httpbulkid, json_encode($index)."\n".$payload))
         return false;
