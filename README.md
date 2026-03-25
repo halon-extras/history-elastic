@@ -22,6 +22,23 @@ apt-get install halon-extras-history-elastic
 yum install halon-extras-history-elastic
 ```
 
+## Configuration
+
+### Telemetry
+
+If configured, telemetry data will be shared with Halon's data collection endpoint (as seen in the `log_telemetry` funciton). This is **optional** and **disabled** by default.
+
+#### How to enable
+
+```yaml
+# smtpd-app.yaml
+plugins:
+  - id: "telemetry"
+    config:
+      jwt: "..." # Your JWT provided by Halon
+      sourcename: "" # Optional source name provided by Halon
+```
+
 ## Exported functions for delivery attempts
 
 Implement the HSL code to the [Post-delivery](https://docs.halon.io/hsl/postdelivery.html) script hook.
@@ -78,7 +95,7 @@ Implement the HSL code to the [RCPT TO](https://docs.halon.io/hsl/rcptto.html), 
 
 The following options are available in the **args** array.
 
-- action `string` -  Message action
+- action `string` - Message action
 - reason `string` - The reason for the specific action
 - custom `array` - Used for additional logging (optional)
 - arguments `array` - Use the predefined context variable $arguments
@@ -118,9 +135,9 @@ log_rcptto([
 
 The following options are available in the **args** array.
 
-- action `string` -  Message action
+- action `string` - Message action
 - reason `string` - The reason for the specific action
-- recipient `array` -  The recipient (https://docs.halon.io/hsl/eod.html#recipient)
+- recipient `array` - The recipient (https://docs.halon.io/hsl/eod.html#recipient)
 - queueid `number` - Queue ID
 - metadata `array` - Metadata
 - custom `array` - Used for additional logging
