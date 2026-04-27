@@ -26,7 +26,7 @@ yum install halon-extras-history-elastic
 
 ### Telemetry
 
-If configured, telemetry data will be shared with Halon's data collection endpoint (as seen in the `log_telemetry` funciton). This is **optional** and **disabled** by default.
+If configured, telemetry data will be shared with Halon's data collection endpoint (as seen in the `log_telemetry` function). This is **optional** and **disabled** by default.
 
 #### How to enable
 
