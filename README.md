@@ -36,7 +36,18 @@ plugins:
   - id: "telemetry"
     config:
       jwt: "..." # Your JWT provided by Halon
-      sourcename: "" # Optional source name provided by Halon
+      sourcename: "" # Source name provided by Halon
+```
+
+#### Without Elasticsearch
+
+Telemetry can also be enabled when not using Elasticsearch by calling the `enable_telemetry` function manually.
+
+```
+import { generate_delivery_attempt, log_telemetry } from "extras://history-elastic";
+
+$doc = generate_delivery_attempt(["arguments" => $arguments, "message" => $message]);
+log_telemetry($doc, ["arguments" => $arguments, "message" => $message]);
 ```
 
 ## Exported functions for delivery attempts
