@@ -41,7 +41,7 @@ plugins:
 
 #### Without Elasticsearch
 
-Telemetry can also be enabled when not using Elasticsearch by calling the `enable_telemetry` function manually.
+Telemetry can also be enabled when not using Elasticsearch by calling the `log_telemetry` function manually.
 
 ```
 import { generate_delivery_attempt, log_telemetry } from "extras://history-elastic";
