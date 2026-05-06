@@ -95,8 +95,15 @@ function generate_delivery_attempt($args, $opts = [])
     return $doc;
 }
 
-function log_telemetry($doc, $args)
+function log_telemetry($doc, $args, $opts = [])
 {
+    $sampling = $opts["sampling"] ?? 0.05;
+    if ($sampling < 0 or $sampling > 1)
+        throw Exception("sampling must be between 0 and 1");
+    if ($sampling === 0)
+        return;
+    if ($sampling !== 1 and rand(1, 100) >= floor($sampling * 100))
+        return;
     $telemetry = [
         "version" => 1,
         "localip" => $doc["localip"],
@@ -144,7 +151,7 @@ function log_delivery_attempt($args, $opts = [])
         ]
     ];
 
-    log_telemetry($doc, $args);
+    log_telemetry($doc, $args, $opts["telemetry"]);
 
     if (!http_bulk($httpbulkid, json_encode($index)."\n".$payload))
         return false;

@@ -47,7 +47,7 @@ Telemetry can also be enabled when not using Elasticsearch by calling the `log_t
 import { generate_delivery_attempt, log_telemetry } from "extras://history-elastic";
 
 $doc = generate_delivery_attempt(["arguments" => $arguments, "message" => $message]);
-log_telemetry($doc, ["arguments" => $arguments, "message" => $message]);
+log_telemetry($doc, ["arguments" => $arguments, "message" => $message], ["sampling" => 0.05]); // 5% of all traffic
 ```
 
 ## Exported functions for delivery attempts
@@ -77,6 +77,11 @@ The following options are available in the optional **opts** array.
 - indexname `string` - Elasticsearch index pattern
 - id `string` - The http-bulk ID
 - redact `boolean` - Redacts the local-part of the email address for both sender and recipient (Default is `false`)
+- telemetry `array` - Telemetry settings
+
+The following options are available in the optional **telemetry** array inside **opts**.
+
+- sampling `number` The sampling percentage as a decimal number between 0 and 1. This setting does nothing if telemetry has not been manually enabled.
 
 ```
 import { log_delivery_attempt } from "extras://history-elastic";
